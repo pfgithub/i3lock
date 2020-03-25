@@ -54,6 +54,8 @@ extern cairo_surface_t *img;
 
 /* Whether the image should be tiled. */
 extern bool tile;
+/* Whether the image should be per-monitor. */
+extern bool per_monitor;
 /* The background color to use (in hex). */
 extern char color[7];
 
@@ -106,10 +108,7 @@ xcb_pixmap_t draw_image(uint32_t *resolution) {
     cairo_t *xcb_ctx = cairo_create(xcb_output);
 
     if (img) {
-        if (!tile) {
-            cairo_set_source_surface(xcb_ctx, img, 0, 0);
-            cairo_paint(xcb_ctx);
-        } else {
+        if (tile) {
             /* create a pattern and fill a rectangle as big as the screen */
             cairo_pattern_t *pattern;
             pattern = cairo_pattern_create_for_surface(img);
@@ -118,6 +117,20 @@ xcb_pixmap_t draw_image(uint32_t *resolution) {
             cairo_rectangle(xcb_ctx, 0, 0, resolution[0], resolution[1]);
             cairo_fill(xcb_ctx);
             cairo_pattern_destroy(pattern);
+        } else if(per_monitor) {
+            cairo_set_source_surface(xcb_ctx, img, 0, 0);
+            cairo_paint(xcb_ctx);
+            
+            cairo_scale(xcb_ctx, 2, 2);
+            cairo_set_source_surface(xcb_ctx, img, 1920 / 2, 0);
+            cairo_paint(xcb_ctx);
+            cairo_identity_matrix(xcb_ctx);
+            
+            cairo_set_source_surface(xcb_ctx, img, 5760, 0);
+            cairo_paint(xcb_ctx);
+        }else {
+            cairo_set_source_surface(xcb_ctx, img, 0, 0);
+            cairo_paint(xcb_ctx);
         }
     } else {
         char strgroups[3][3] = {{color[0], color[1], '\0'},

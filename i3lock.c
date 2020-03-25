@@ -95,6 +95,7 @@ static int randr_base = -1;
 
 cairo_surface_t *img = NULL;
 bool tile = false;
+bool per_monitor = false;
 bool ignore_empty_password = false;
 bool skip_repeated_empty_password = false;
 
@@ -1030,6 +1031,7 @@ int main(int argc, char *argv[]) {
         {"image", required_argument, NULL, 'i'},
         {"raw", required_argument, NULL, 0},
         {"tiling", no_argument, NULL, 't'},
+        {"per-monitor", no_argument, NULL, 'm'},
         {"ignore-empty-password", no_argument, NULL, 'e'},
         {"inactivity-timeout", required_argument, NULL, 'I'},
         {"show-failed-attempts", no_argument, NULL, 'f'},
@@ -1040,7 +1042,7 @@ int main(int argc, char *argv[]) {
     if ((username = pw->pw_name) == NULL)
         errx(EXIT_FAILURE, "pw->pw_name is NULL.");
 
-    char *optstring = "hvnbdc:p:ui:teI:f";
+    char *optstring = "hvnbdc:p:ui:tmeI:f";
     while ((o = getopt_long(argc, argv, optstring, longopts, &longoptind)) != -1) {
         switch (o) {
             case 'v':
@@ -1077,7 +1079,16 @@ int main(int argc, char *argv[]) {
                 image_path = strdup(optarg);
                 break;
             case 't':
+                if(per_monitor){
+                    errx(EXIT_FAILURE, "t cannot be combined with m");
+                }
                 tile = true;
+                break;
+            case 'm':
+                if(tile){
+                    errx(EXIT_FAILURE, "m cannot be combined with t");
+                }
+                per_monitor = true;
                 break;
             case 'p':
                 if (!strcmp(optarg, "win")) {
@@ -1102,7 +1113,7 @@ int main(int argc, char *argv[]) {
                 break;
             default:
                 errx(EXIT_FAILURE, "Syntax: i3lock [-v] [-n] [-b] [-d] [-c color] [-u] [-p win|default]"
-                                   " [-i image.png] [-t] [-e] [-I timeout] [-f]");
+                                   " [-i image.png] [-t] [-m] [-e] [-I timeout] [-f]");
         }
     }
 
